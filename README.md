@@ -101,8 +101,6 @@ CONTENT(IMAGE) :
 - ▶️ Colab Notebook: [Run in Google Colab](https://colab.research.google.com/drive/1y-Mtm_JQ91gAK-Vk05sFn6exzmFZDeSG?usp=sharing)
 - 📁 GitHub Source: [View Repository](https://github.com/Prabhu-bit/NEURAL-STYLE-TRANSFER)
 
-#BADGES
 
-[![Visit Website](https://img.shields.io/badge/View-Live%20Website-brightgreen?style=for-the-badge)](https://heroic-cuchufli-27760c.netlify.app)
 
 
