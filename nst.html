@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neural Style Transfer with PyTorch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: { primary: "#6366f1", secondary: "#22c55e" },
+            borderRadius: {
+              none: "0px",
+              sm: "4px",
+              DEFAULT: "8px",
+              md: "12px",
+              lg: "16px",
+              xl: "20px",
+              "2xl": "24px",
+              "3xl": "32px",
+              full: "9999px",
+              button: "8px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :where([class^="ri-"])::before { content: "\f3c2"; }
+      body {
+      font-family: 'Inter', sans-serif;
+      color: rgb(243, 244, 246);
+      animation: gradientBG 10s ease infinite;
+      background: linear-gradient(-45deg, #6366f1, #22c55e, #3b82f6, #8b5cf6);
+      background-size: 400% 400%;
+      }
+
+      @keyframes gradientBG {
+      0% { background-position: 0% 50% }
+      50% { background-position: 100% 50% }
+      100% { background-position: 0% 50% }
+      }
+
+      @keyframes fadeInUp {
+      from {
+      opacity: 0;
+      transform: translateY(20px);
+      }
+      to {
+      opacity: 1;
+      transform: translateY(0);
+      }
+      }
+
+      @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+      }
+
+      .animate-fadeInUp {
+      animation: fadeInUp 0.8s ease-out forwards;
+      opacity: 0;
+      }
+
+      .animate-float {
+      animation: float 3s ease-in-out infinite;
+      }
+
+      .section-reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.8s ease-out;
+      }
+
+      .section-reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+      }
+      .hero-gradient {
+      background: linear-gradient(90deg, rgba(17, 24, 39, 0.95) 0%, rgba(17, 24, 39, 0.9) 50%, rgba(17, 24, 39, 0.8) 100%);
+      backdrop-filter: blur(8px);
+      }
+      .text-gradient {
+      background: linear-gradient(135deg, #6366f1 0%, #22c55e 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      }
+      input:focus {
+      outline: none;
+      }
+      .custom-checkbox {
+      appearance: none;
+      width: 1.25rem;
+      height: 1.25rem;
+      border: 2px solid #d1d5db;
+      border-radius: 4px;
+      position: relative;
+      cursor: pointer;
+      }
+      .custom-checkbox:checked {
+      background-color: #6366f1;
+      border-color: #6366f1;
+      }
+      .custom-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 2px;
+      width: 5px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900">
+    <!-- Navigation -->
+    <nav
+      class="w-full bg-gray-800/80 backdrop-blur-sm shadow-lg border-b border-gray-700/50 fixed top-0 z-50"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <a href="#" class="text-2xl font-['Pacifico'] text-primary">NST</a>
+          </div>
+          <div class="hidden md:flex items-center space-x-8">
+            <a
+              href="#about"
+              class="text-gray-300 hover:text-primary transition-colors"
+              >About</a
+            >
+            <a
+              href="#demo"
+              class="text-gray-300 hover:text-primary transition-colors"
+              >Demo</a
+            >
+            <a
+              href="#colab"
+              class="text-gray-300 hover:text-primary transition-colors"
+              >Colab</a
+            >
+            <a
+              href="#github"
+              class="text-gray-300 hover:text-primary transition-colors"
+              >GitHub</a
+            >
+          </div>
+          <div class="md:hidden flex items-center">
+            <button
+              type="button"
+              class="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-primary focus:outline-none"
+            >
+              <i class="ri-menu-line ri-lg"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <!-- Hero Section -->
+    <section class="pt-24 pb-16 relative overflow-hidden">
+      <div class="absolute inset-0 z-0">
+        <div
+          style="background-image: url('https://readdy.ai/api/search-image?query=Neural%20style%20transfer%20AI%20technology%20concept%20with%20artistic%20painting%20styles%20being%20applied%20to%20photographs%2C%20modern%20deep%20learning%20visualization%20with%20neural%20networks%2C%20high%20quality%20digital%20art%2C%20clean%20background%20with%20purple%20and%20blue%20gradients%2C%20tech%20aesthetic&width=1600&height=800&seq=1&orientation=landscape'); background-size: cover; background-position: center right;"
+          class="w-full h-full"
+        ></div>
+      </div>
+      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+        <div
+          class="w-full md:w-1/2 hero-gradient py-16 px-8 rounded-lg backdrop-blur-md"
+        >
+          <h1
+            class="text-4xl md:text-5xl font-bold text-gray-100 mb-6 text-gradient"
+          >
+            Neural Style Transfer with PyTorch
+          </h1>
+          <p class="text-lg text-gray-300 mb-8 max-w-lg">
+            Transform your photos into artwork using AI. This project applies
+            the style of famous paintings to regular photos using a deep
+            learning technique called Neural Style Transfer.
+          </p>
+          <a
+            href="#colab"
+            class="inline-flex items-center px-6 py-3 bg-primary text-white font-medium rounded-button shadow-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
+          >
+            <span class="w-6 h-6 flex items-center justify-center mr-2">
+              <i class="ri-code-box-line"></i>
+            </span>
+            Try It in Colab
+          </a>
+        </div>
+      </div>
+    </section>
+    <!-- About Section -->
+    <section id="about" class="py-20 bg-gray-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl font-bold text-gray-100 mb-4">
+            About the Project
+          </h2>
+          <p class="text-lg text-gray-300 max-w-2xl mx-auto">
+            Learn how our Neural Style Transfer implementation works and the
+            technology behind it.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div
+            class="bg-gray-900/50 p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow border border-gray-700/50"
+          >
+            <div
+              class="w-12 h-12 flex items-center justify-center bg-primary/10 rounded-full mb-6"
+            >
+              <i class="ri-artboard-2-line ri-xl text-primary"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-100 mb-4">
+              Neural Style Transfer
+            </h3>
+            <p class="text-gray-300">
+              Neural Style Transfer is a technique that uses convolutional
+              neural networks to combine the content of one image with the style
+              of another. The algorithm separates and recombines content and
+              style features to create visually stunning transformations.
+            </p>
+          </div>
+          <div
+            class="bg-gray-900/50 p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow border border-gray-700/50"
+          >
+            <div
+              class="w-12 h-12 flex items-center justify-center bg-primary/10 rounded-full mb-6"
+            >
+              <i class="ri-brain-line ri-xl text-primary"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-100 mb-4">
+              VGG19 Architecture
+            </h3>
+            <p class="text-gray-300">
+              Our implementation uses the pre-trained VGG19 model to extract
+              feature representations. Content features are extracted from
+              higher layers while style features come from multiple layers,
+              capturing both fine details and broader patterns in the artwork.
+            </p>
+          </div>
+          <div
+            class="bg-gray-900/50 p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow border border-gray-700/50"
+          >
+            <div
+              class="w-12 h-12 flex items-center justify-center bg-primary/10 rounded-full mb-6"
+            >
+              <i class="ri-gpu-line ri-xl text-primary"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-100 mb-4">
+              GPU Acceleration
+            </h3>
+            <p class="text-gray-300">
+              The entire process runs on GPU for significantly faster image
+              generation. This allows for real-time style transfer and
+              experimentation with different style weights, content weights, and
+              optimization parameters to achieve the perfect result.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Demo Gallery -->
+    <section id="demo" class="py-20 bg-gray-900">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl font-bold text-gray-100 mb-4">Demo Gallery</h2>
+          <p class="text-lg text-gray-300 max-w-2xl mx-auto">
+            See the impressive results of Neural Style Transfer in action with
+            these examples.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Demo 1 -->
+          <div
+            class="bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-700/50"
+          >
+            <div class="p-6">
+              <h3 class="text-xl font-semibold text-gray-900 mb-4">
+                Urban Landscape + Starry Night
+              </h3>
+              <div class="grid grid-cols-3 gap-4">
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">Content Image</p>
+                  <div class="aspect-square rounded overflow-hidden">
+                    <img
+                      src="https://readdy.ai/api/search-image?query=urban%20cityscape%20with%20tall%20buildings%20and%20skyscrapers%2C%20modern%20architecture%2C%20clear%20blue%20sky%2C%20high%20quality%20photograph%2C%20realistic%2C%20detailed&width=400&height=400&seq=2&orientation=squarish"
+                      alt="Urban Cityscape"
+                      class="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">Style Image</p>
+                  <div class="aspect-square rounded overflow-hidden">
+                    <img
+                      src="https://readdy.ai/api/search-image?query=Van%20Goghs%20Starry%20Night%20painting%2C%20swirling%20blue%20night%20sky%20with%20bright%20yellow%20stars%2C%20iconic%20post-impressionist%20artwork%2C%20vibrant%20colors%2C%20expressive%20brushstrokes&width=400&height=400&seq=3&orientation=squarish"
+                      alt="Starry Night"
+                      class="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">Result</p>
+                  <div class="aspect-square rounded overflow-hidden">
+                    <img
+                      src="https://readdy.ai/api/search-image?query=urban%20cityscape%20with%20tall%20buildings%20transformed%20in%20the%20style%20of%20Van%20Goghs%20Starry%20Night%2C%20swirling%20blue%20sky%20with%20yellow%20stars%20around%20skyscrapers%2C%20neural%20style%20transfer%20result%2C%20digital%20art&width=400&height=400&seq=4&orientation=squarish"
+                      alt="Result"
+                      class="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Demo 2 -->
+          <div
+            class="bg-gray-800/50 rounded-lg shadow-md overflow-hidden border border-gray-700/50"
+          >
+            <div class="p-6">
+              <h3 class="text-xl font-semibold text-gray-100 mb-4">
+                Portrait + Picasso
+              </h3>
+              <div class="grid grid-cols-3 gap-4">
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">Content Image</p>
+                  <div class="aspect-square rounded overflow-hidden">
+                    <img
+                      src="https://readdy.ai/api/search-image?query=professional%20portrait%20photograph%20of%20a%20woman%20with%20neutral%20expression%2C%20high%20quality%20studio%20lighting%2C%20clean%20background%2C%20detailed%20facial%20features%2C%20professional%20photography&width=400&height=400&seq=5&orientation=squarish"
+                      alt="Portrait"
+                      class="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">Style Image</p>
+                  <div class="aspect-square rounded overflow-hidden">
+                    <img
+                      src="https://readdy.ai/api/search-image?query=Picasso%20cubist%20painting%2C%20abstract%20faces%20with%20geometric%20shapes%2C%20bold%20colors%2C%20fragmented%20perspective%2C%20famous%20cubism%20artwork%2C%20artistic%20masterpiece&width=400&height=400&seq=6&orientation=squarish"
+                      alt="Picasso"
+                      class="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">Result</p>
+                  <div class="aspect-square rounded overflow-hidden">
+                    <img
+                      src="https://readdy.ai/api/search-image?query=portrait%20of%20a%20woman%20transformed%20in%20Picassos%20cubist%20style%2C%20fragmented%20facial%20features%20with%20geometric%20shapes%2C%20bold%20colors%2C%20neural%20style%20transfer%20result%2C%20digital%20art&width=400&height=400&seq=7&orientation=squarish"
+                      alt="Result"
+                      class="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Demo 3 -->
+          <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-6">
+              <h3 class="text-xl font-semibold text-gray-900 mb-4">
+                Nature + Monet
+              </h3>
+              <div class="grid grid-cols-3 gap-4">
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">Content Image</p>
+                  <div class="aspect-square rounded overflow-hidden">
+                    <img
+                      src="https://readdy.ai/api/search-image?query=landscape%20photograph%20of%20a%20lake%20with%20mountains%20in%20background%2C%20natural%20scenery%2C%20clear%20water%20reflection%2C%20trees%2C%20high%20quality%20nature%20photography%2C%20realistic&width=400&height=400&seq=8&orientation=squarish"
+                      alt="Nature"
+                      class="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">Style Image</p>
+                  <div class="aspect-square rounded overflow-hidden">
+                    <img
+                      src="https://readdy.ai/api/search-image?query=Claude%20Monet%20impressionist%20painting%2C%20water%20lilies%2C%20soft%20brushstrokes%2C%20pastel%20colors%2C%20light%20reflections%20on%20water%2C%20famous%20impressionist%20artwork&width=400&height=400&seq=9&orientation=squarish"
+                      alt="Monet"
+                      class="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">Result</p>
+                  <div class="aspect-square rounded overflow-hidden">
+                    <img
+                      src="https://readdy.ai/api/search-image?query=landscape%20with%20lake%20and%20mountains%20transformed%20in%20Monets%20impressionist%20style%2C%20soft%20brushstrokes%2C%20pastel%20colors%2C%20light%20reflections%2C%20neural%20style%20transfer%20result%2C%20digital%20art&width=400&height=400&seq=10&orientation=squarish"
+                      alt="Result"
+                      class="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Demo 4 -->
+          <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-6">
+              <h3 class="text-xl font-semibold text-gray-900 mb-4">
+                Architecture + Kandinsky
+              </h3>
+              <div class="grid grid-cols-3 gap-4">
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">Content Image</p>
+                  <div class="aspect-square rounded overflow-hidden">
+                    <img
+                      src="https://readdy.ai/api/search-image?query=architectural%20photograph%20of%20a%20modern%20building%20with%20interesting%20geometric%20design%2C%20clean%20lines%2C%20glass%20and%20steel%20structure%2C%20professional%20architectural%20photography&width=400&height=400&seq=11&orientation=squarish"
+                      alt="Architecture"
+                      class="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">Style Image</p>
+                  <div class="aspect-square rounded overflow-hidden">
+                    <img
+                      src="https://readdy.ai/api/search-image?query=Wassily%20Kandinsky%20abstract%20painting%2C%20geometric%20shapes%2C%20bright%20primary%20colors%2C%20lines%20and%20circles%2C%20non-representational%20art%2C%20famous%20abstract%20expressionist%20artwork&width=400&height=400&seq=12&orientation=squarish"
+                      alt="Kandinsky"
+                      class="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 mb-2">Result</p>
+                  <div class="aspect-square rounded overflow-hidden">
+                    <img
+                      src="https://readdy.ai/api/search-image?query=modern%20building%20transformed%20in%20Kandinskys%20abstract%20style%2C%20geometric%20shapes%20in%20bright%20primary%20colors%2C%20lines%20and%20circles%20overlaid%20on%20architectural%20structure%2C%20neural%20style%20transfer%20result%2C%20digital%20art&width=400&height=400&seq=13&orientation=squarish"
+                      alt="Result"
+                      class="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Colab Section -->
+    <section id="colab" class="py-20 bg-gray-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl font-bold text-gray-100 mb-4">Try It Yourself</h2>
+          <p class="text-lg text-gray-300 max-w-2xl mx-auto">
+            Run the Neural Style Transfer code directly in your browser using
+            Google Colab.
+          </p>
+        </div>
+        <div
+          class="bg-gray-900/50 rounded-lg shadow-md p-8 max-w-3xl mx-auto border border-gray-700/50"
+        >
+          <div class="flex flex-col md:flex-row items-center">
+            <div class="w-full md:w-1/2 mb-8 md:mb-0 md:pr-8">
+              <div class="aspect-video rounded-lg overflow-hidden shadow-md">
+                <img
+                  src="https://readdy.ai/api/search-image?query=Google%20Colab%20notebook%20interface%20showing%20Python%20code%20for%20neural%20style%20transfer%2C%20with%20input%20cells%2C%20output%20cells%20showing%20images%2C%20clean%20layout%2C%20realistic%20screenshot&width=600&height=400&seq=14&orientation=landscape"
+                  alt="Colab Notebook Preview"
+                  class="w-full h-full object-cover object-top"
+                />
+              </div>
+            </div>
+            <div class="w-full md:w-1/2 text-center md:text-left">
+              <h3 class="text-xl font-semibold text-gray-100 mb-4">
+                Open in Google Colab
+              </h3>
+              <p class="text-gray-300 mb-6">
+                Our implementation is available as a ready-to-run Colab
+                notebook. Just click the button below to open it and start
+                creating your own artistic transformations.
+              </p>
+              <a
+                href="https://colab.research.google.com/drive/1y-Mtm_JQ91gAK-Vk05sFn6exzmFZDeSG?usp=sharing" target="_blank"
+                class="inline-flex items-center px-6 py-3 bg-orange-500 text-white font-medium rounded-button shadow-md hover:bg-orange-600 transition-colors whitespace-nowrap"
+              >
+                <span class="w-6 h-6 flex items-center justify-center mr-2">
+                  <i class="ri-code-box-line"></i>
+                </span>
+                Open in Google Colab
+              </a>
+            </div>
+          </div>
+          <div class="mt-10 pt-8 border-t border-gray-200">
+            <h4 class="text-lg font-semibold text-gray-100 mb-4">
+              Quick Start Guide
+            </h4>
+            <ol class="list-decimal list-inside text-gray-300 space-y-2">
+              <li>Click the "Open in Google Colab" button above</li>
+              <li>Sign in to your Google account if prompted</li>
+              <li>
+                Run the cells in order by clicking the play button or pressing
+                Shift+Enter
+              </li>
+              <li>
+                Upload your own content and style images using the file upload
+                widget
+              </li>
+              <li>
+                Adjust parameters like style weight and content weight to
+                fine-tune results
+              </li>
+              <li>
+                Download your transformed image or share it directly from Colab
+              </li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- GitHub Section -->
+    <section id="github" class="py-20 bg-gray-900">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div
+          class="bg-gray-800/50 rounded-lg shadow-md p-8 max-w-3xl mx-auto border border-gray-700/50"
+        >
+          <div class="flex flex-col md:flex-row items-center">
+            <div class="w-full md:w-1/2 mb-8 md:mb-0 md:pr-8 text-center">
+              <div
+                class="w-24 h-24 flex items-center justify-center mx-auto bg-gray-700/50 rounded-full"
+              >
+                <i class="ri-github-fill ri-5x text-white"></i>
+              </div>
+            </div>
+            <div class="w-full md:w-1/2 text-center md:text-left">
+              <h3 class="text-xl font-semibold text-gray-100 mb-4">
+                Source Code on GitHub
+              </h3>
+              <p class="text-gray-300 mb-6">
+                Access the complete source code, documentation, and additional
+                examples in our GitHub repository.
+              </p>
+              <a
+                href="https://github.com/Prabhu-bit/NEURAL-STYLE-TRANSFER" target="_blank"
+                class="inline-flex items-center px-6 py-3 bg-primary text-white font-medium rounded-button shadow-md hover:bg-primary/90 transition-colors whitespace-nowrap"
+              >
+                <span class="w-6 h-6 flex items-center justify-center mr-2">
+                  <i class="ri-github-line"></i>
+                </span>
+                View on GitHub
+              </a>
+            </div>
+          </div>
+          <div class="mt-10 pt-8 border-t border-gray-700/50">
+            <h4 class="text-lg font-semibold text-gray-100 mb-4">
+              Repository Features
+            </h4>
+            <ul class="space-y-3">
+              <li class="flex items-start">
+                <span
+                  class="w-6 h-6 flex items-center justify-center text-primary mr-2 mt-0.5"
+                >
+                  <i class="ri-check-line"></i>
+                </span>
+                <span class="text-gray-300"
+                  >Complete PyTorch implementation with detailed comments</span
+                >
+              </li>
+              <li class="flex items-start">
+                <span
+                  class="w-6 h-6 flex items-center justify-center text-primary mr-2 mt-0.5"
+                >
+                  <i class="ri-check-line"></i>
+                </span>
+                <span class="text-gray-300"
+                  >Example content and style images for testing</span
+                >
+              </li>
+              <li class="flex items-start">
+                <span
+                  class="w-6 h-6 flex items-center justify-center text-primary mr-2 mt-0.5"
+                >
+                  <i class="ri-check-line"></i>
+                </span>
+                <span class="text-gray-300"
+                  >Comprehensive documentation and usage instructions</span
+                >
+              </li>
+              <li class="flex items-start">
+                <span
+                  class="w-6 h-6 flex items-center justify-center text-primary mr-2 mt-0.5"
+                >
+                  <i class="ri-check-line"></i>
+                </span>
+                <span class="text-gray-300"
+                  >Performance optimization tips for faster processing</span
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Newsletter Section -->
+    <section class="py-20 bg-gray-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div
+          class="bg-gray-900/50 rounded-lg p-8 md:p-12 border border-gray-700/50"
+        >
+          <div class="max-w-2xl mx-auto text-center">
+            <h2 class="text-3xl font-bold text-gray-100 mb-4">Stay Updated</h2>
+            <p class="text-lg text-gray-300 mb-8">
+              Subscribe to our newsletter to receive updates on new features,
+              improvements, and additional style transfer techniques.
+            </p>
+            <form class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                class="flex-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-button text-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors placeholder-gray-500"
+              />
+              <button
+                type="submit"
+                class="px-6 py-3 bg-primary text-white font-medium rounded-button shadow-md hover:bg-primary/90 transition-colors whitespace-nowrap"
+              >
+                Subscribe
+              </button>
+            </form>
+            <div class="mt-6 flex items-center justify-center">
+              <input type="checkbox" id="consent" class="custom-checkbox" />
+              <label for="consent" class="ml-2 text-sm text-gray-600"
+                >I agree to receive occasional emails about this project</label
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Footer -->
+    <footer class="bg-gray-950 text-white py-12 border-t border-gray-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <a
+              href="#"
+              class="text-2xl font-['Pacifico'] text-white mb-4 inline-block"
+              >NST</a
+            >
+            <p class="text-gray-400 mt-2">
+              Transform your photos into artwork using AI with our Neural Style
+              Transfer implementation.
+            </p>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+            <ul class="space-y-2">
+              <li>
+                <a
+                  href="#about"
+                  class="text-gray-400 hover:text-white transition-colors"
+                  >About the Project</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#demo"
+                  class="text-gray-400 hover:text-white transition-colors"
+                  >Demo Gallery</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#colab"
+                  class="text-gray-400 hover:text-white transition-colors"
+                  >Try in Colab</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#github"
+                  class="text-gray-400 hover:text-white transition-colors"
+                  >GitHub Repository</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold mb-4">Contact</h3>
+            <p class="text-gray-400 mb-4">
+              Have questions or suggestions? Feel free to reach out.
+            </p>
+            <a
+              href="mailto:contact@example.com"
+              class="text-primary hover:text-primary/80 transition-colors"
+              >contact@example.com</a
+            >
+            <div class="flex space-x-4 mt-6">
+              <a
+                href="#"
+                class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
+              >
+                <i class="ri-github-fill ri-lg"></i>
+              </a>
+              <a
+                href="#"
+                class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
+              >
+                <i class="ri-twitter-x-fill ri-lg"></i>
+              </a>
+              <a
+                href="#"
+                class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
+              >
+                <i class="ri-linkedin-fill ri-lg"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="mt-12 pt-8 border-t border-gray-800 text-center">
+          <p class="text-gray-400">
+            Built as part of the CodTech AI Internship
+          </p>
+          <p class="text-gray-500 text-sm mt-2">
+            © 2025 Neural Style Transfer Project. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Animation on scroll
+        const sections = document.querySelectorAll("section");
+        const cards = document.querySelectorAll(".bg-gray-800/50, .bg-gray-900/50");
+
+        function revealOnScroll() {
+          sections.forEach((section) => {
+            const sectionTop = section.getBoundingClientRect().top;
+            const windowHeight = window.innerHeight;
+
+            if (sectionTop < windowHeight * 0.85) {
+              section.classList.add("visible");
+            }
+          });
+
+          cards.forEach((card, index) => {
+            const cardTop = card.getBoundingClientRect().top;
+            const windowHeight = window.innerHeight;
+
+            if (cardTop < windowHeight * 0.85) {
+              setTimeout(() => {
+                card.classList.add("animate-fadeInUp");
+              }, index * 100);
+            }
+          });
+        }
+
+        // Initial check
+        revealOnScroll();
+
+        // Add scroll event listener
+        window.addEventListener("scroll", revealOnScroll);
+
+        // Smooth scrolling for anchor links
+        // Add animation classes to sections
+        sections.forEach((section) => {
+          section.classList.add("section-reveal");
+        });
+
+        // Add floating animation to specific elements
+        const floatingElements = document.querySelectorAll(
+          ".w-24.h-24, .aspect-video",
+        );
+        floatingElements.forEach((element) => {
+          element.classList.add("animate-float");
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+          anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute("href"));
+            if (target) {
+              window.scrollTo({
+                top: target.offsetTop - 80,
+                behavior: "smooth",
+              });
+            }
+          });
+        });
+      });
+      document.addEventListener("DOMContentLoaded", function () {
+        // Mobile menu toggle
+        const menuButton = document.querySelector("button");
+        const mobileMenu = document.createElement("div");
+        mobileMenu.className =
+          "md:hidden fixed inset-0 bg-white z-50 transform translate-x-full transition-transform duration-300 ease-in-out";
+        mobileMenu.innerHTML = `
+      <div class="flex justify-end p-4">
+      <button type="button" class="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-primary focus:outline-none">
+      <i class="ri-close-line ri-lg"></i>
+      </button>
+      </div>
+      <div class="px-4 py-6">
+      <ul class="space-y-6">
+      <li><a href="#about" class="text-xl text-gray-700 hover:text-primary transition-colors">About</a></li>
+      <li><a href="#demo" class="text-xl text-gray-700 hover:text-primary transition-colors">Demo</a></li>
+      <li><a href="#colab" class="text-xl text-gray-700 hover:text-primary transition-colors">Colab</a></li>
+      <li><a href="#github" class="text-xl text-gray-700 hover:text-primary transition-colors">GitHub</a></li>
+      </ul>
+      </div>
+      `;
+        document.body.appendChild(mobileMenu);
+        menuButton.addEventListener("click", function () {
+          mobileMenu.classList.toggle("translate-x-full");
+          document.body.classList.toggle("overflow-hidden");
+        });
+        mobileMenu.querySelector("button").addEventListener("click", function () {
+          mobileMenu.classList.add("translate-x-full");
+          document.body.classList.remove("overflow-hidden");
+        });
+        mobileMenu.querySelectorAll("a").forEach((link) => {
+          link.addEventListener("click", function () {
+            mobileMenu.classList.add("translate-x-full");
+            document.body.classList.remove("overflow-hidden");
+          });
+        });
+      });
+      document.addEventListener("DOMContentLoaded", function () {
+        // Custom checkbox functionality
+        const checkbox = document.getElementById("consent");
+        if (checkbox) {
+          checkbox.addEventListener("change", function () {
+            this.classList.toggle("checked", this.checked);
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
