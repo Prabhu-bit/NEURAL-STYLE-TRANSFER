@@ -77,3 +77,16 @@ This project is open-source and available under the MIT License. Feel free to ex
 🙌 Acknowledgment
 This project was built as part of the CodTech AI Internship to demonstrate practical AI implementation with a creative edge. Thanks to the CodTech team for the opportunity and guidance!
 
+#WEBSITE
+
+![Image](https://github.com/user-attachments/assets/e68aa22b-68df-409f-9bd7-a6ad5d10e679)
+
+#INPUT
+
+![Image](https://github.com/user-attachments/assets/7c73fe5a-31e8-4cad-b5f0-08b16434c7b3)
+
+![Image](https://github.com/user-attachments/assets/1ff23f51-aa95-4772-a4fa-f3731878f049)
+
+#OUTPUT
+
+![Image](https://github.com/user-attachments/assets/922637ee-648c-4b90-a6d3-675bbdf5d722)
