@@ -82,10 +82,12 @@ This project was built as part of the CodTech AI Internship to demonstrate pract
 ![Image](https://github.com/user-attachments/assets/e68aa22b-68df-409f-9bd7-a6ad5d10e679)
 
 #INPUT
-
+STYLE :
 ![Image](https://github.com/user-attachments/assets/7c73fe5a-31e8-4cad-b5f0-08b16434c7b3)
 
+CONTENT :
 ![Image](https://github.com/user-attachments/assets/1ff23f51-aa95-4772-a4fa-f3731878f049)
+
 
 #OUTPUT
 
