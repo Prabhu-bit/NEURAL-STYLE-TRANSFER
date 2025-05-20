@@ -13,6 +13,7 @@ DURATION : 4 WEEKS
 MENTOR : NEELA SANTOSH
 
 #DESCRIPTION 
+
 This project is a simple and elegant demonstration of Neural Style Transfer (NST) implemented using PyTorch and executed via Google Colab. It showcases how artificial intelligence can blend the content of one image with the artistic style of another to produce stunning, creative visuals.
 
 The entire backend code runs in a Google Colab notebook, making it easy to experiment without needing local setup or a powerful GPU. The frontend is a fully responsive website built using Tailwind CSS, acting as a clean interface for exploring the project, viewing demos, and accessing Colab and GitHub.
