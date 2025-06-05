@@ -1,19 +1,5 @@
 # NEURAL-STYLE-TRANSFER
 
-COMPANY : CODTECH IT SOLUTIONS
-
-NAME : BASAVAPRABHU R HALAKATTI
-
-INTERN ID : CT04DL919
-
-DOMAIN : ARTIFICIAL INTELLIGENCE
-
-DURATION : 4 WEEKS
-
-MENTOR : NEELA SANTOSH
-
-#DESCRIPTION 
-
 This project is a simple and elegant demonstration of Neural Style Transfer (NST) implemented using PyTorch and executed via Google Colab. It showcases how artificial intelligence can blend the content of one image with the artistic style of another to produce stunning, creative visuals.
 
 The entire backend code runs in a Google Colab notebook, making it easy to experiment without needing local setup or a powerful GPU. The frontend is a fully responsive website built using Tailwind CSS, acting as a clean interface for exploring the project, viewing demos, and accessing Colab and GitHub.
@@ -74,8 +60,6 @@ Visit the website’s demo section to see how portraits, cityscapes, and natural
 📜 License
 This project is open-source and available under the MIT License. Feel free to explore, fork, and customize it.
 
-🙌 Acknowledgment
-This project was built as part of the CodTech AI Internship to demonstrate practical AI implementation with a creative edge. Thanks to the CodTech team for the opportunity and guidance!
 
 #WEBSITE
 
