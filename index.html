@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -129,6 +130,31 @@
       border-width: 0 2px 2px 0;
       transform: rotate(45deg);
       }
+      
+      /* Button disabled state */
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      
+      /* Success message styling */
+      .success-message {
+        background-color: #10b981;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-top: 16px;
+        display: none;
+      }
+      
+      .error-message {
+        background-color: #ef4444;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-top: 16px;
+        display: none;
+      }
     </style>
   </head>
   <body class="bg-gray-900">
@@ -197,7 +223,8 @@
             learning technique called Neural Style Transfer.
           </p>
           <a
-            href="#colab"
+            href="https://colab.research.google.com/drive/1y-Mtm_JQ91gAK-Vk05sFn6exzmFZDeSG?usp=sharing"
+            target="_blank"
             class="inline-flex items-center px-6 py-3 bg-primary text-white font-medium rounded-button shadow-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
           >
             <span class="w-6 h-6 flex items-center justify-center mr-2">
@@ -621,10 +648,12 @@
               Subscribe to our newsletter to receive updates on new features,
               improvements, and additional style transfer techniques.
             </p>
-            <form class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+            <form id="newsletter-form" class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
               <input
                 type="email"
+                id="email-input"
                 placeholder="Enter your email"
+                required
                 class="flex-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-button text-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors placeholder-gray-500"
               />
               <button
@@ -639,6 +668,12 @@
               <label for="consent" class="ml-2 text-sm text-gray-600"
                 >I agree to receive occasional emails about this project</label
               >
+            </div>
+            <div id="success-message" class="success-message">
+              Thank you for subscribing! We'll send updates to your email.
+            </div>
+            <div id="error-message" class="error-message">
+              Please check your input and try again.
             </div>
           </div>
         </div>
@@ -698,25 +733,31 @@
               Have questions or suggestions? Feel free to reach out.
             </p>
             <a
-              href="mailto:contact@example.com"
+              href="mailto:prabhu.r.halakatti@gmail.com"
               class="text-primary hover:text-primary/80 transition-colors"
-              >contact@example.com</a
+              >prabhu.r.halakatti@gmail.com</a
             >
             <div class="flex space-x-4 mt-6">
               <a
-                href="#"
+                href="https://github.com/Prabhu-bit/NEURAL-STYLE-TRANSFER"
+                target="_blank"
+                title="GitHub Repository"
                 class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
               >
                 <i class="ri-github-fill ri-lg"></i>
               </a>
               <a
-                href="#"
+                href="https://twitter.com/intent/tweet?text=Check%20out%20this%20amazing%20Neural%20Style%20Transfer%20project!&url=https://github.com/Prabhu-bit/NEURAL-STYLE-TRANSFER"
+                target="_blank"
+                title="Share on Twitter"
                 class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
               >
                 <i class="ri-twitter-x-fill ri-lg"></i>
               </a>
               <a
-                href="#"
+                href="https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/Prabhu-bit/NEURAL-STYLE-TRANSFER"
+                target="_blank"
+                title="Share on LinkedIn"
                 class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
               >
                 <i class="ri-linkedin-fill ri-lg"></i>
@@ -838,6 +879,77 @@
         if (checkbox) {
           checkbox.addEventListener("change", function () {
             this.classList.toggle("checked", this.checked);
+          });
+        }
+
+        // Newsletter form functionality
+        const newsletterForm = document.getElementById("newsletter-form");
+        const emailInput = document.getElementById("email-input");
+        const consentCheckbox = document.getElementById("consent");
+        const successMessage = document.getElementById("success-message");
+        const errorMessage = document.getElementById("error-message");
+
+        function showMessage(element, message) {
+          element.textContent = message;
+          element.style.display = "block";
+          setTimeout(() => {
+            element.style.display = "none";
+          }, 5000);
+        }
+
+        function hideMessages() {
+          successMessage.style.display = "none";
+          errorMessage.style.display = "none";
+        }
+
+        if (newsletterForm) {
+          newsletterForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+            hideMessages();
+            
+            const email = emailInput.value.trim();
+            const consentGiven = consentCheckbox.checked;
+
+            // Validate email
+            if (!email) {
+              showMessage(errorMessage, "Please enter your email address.");
+              emailInput.focus();
+              return;
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+              showMessage(errorMessage, "Please enter a valid email address.");
+              emailInput.focus();
+              return;
+            }
+
+            // Check consent
+            if (!consentGiven) {
+              showMessage(errorMessage, "Please agree to receive occasional emails about this project.");
+              consentCheckbox.focus();
+              return;
+            }
+
+            // Simulate form submission (replace with actual API call)
+            const submitButton = newsletterForm.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+            
+            submitButton.textContent = "Subscribing...";
+            submitButton.disabled = true;
+
+            // Simulate API call delay
+            setTimeout(() => {
+              showMessage(successMessage, `Thank you for subscribing! We'll send updates to ${email}`);
+              emailInput.value = "";
+              consentCheckbox.checked = false;
+              submitButton.textContent = originalText;
+              submitButton.disabled = false;
+              
+              // You can replace this with actual form submission to your backend
+              // Example: fetch('/api/subscribe', { method: 'POST', body: JSON.stringify({email}) })
+            }, 1500);
           });
         }
       });
