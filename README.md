@@ -47,6 +47,7 @@ Download the output image
 Visit the website’s demo section to see how portraits, cityscapes, and natural scenes are transformed into artwork using styles from Van Gogh, Monet, Picasso, and more.
 
 🛠 Tools Used
+
 🧠 PyTorch (for NST)
 
 🖼 PIL (for image processing)
